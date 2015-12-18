@@ -1,6 +1,6 @@
 {
   "name": "og-crawler",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Crawls/scrapes a website for og data, so Facebook will show current images and descriptions when sharing.",
   "keywords": [
     "crawler",
