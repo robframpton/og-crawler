@@ -2,18 +2,26 @@
   "name": "og-crawler",
   "version": "1.0.0",
   "description": "Crawls/scrapes a website for og data, so Facebook will show current images and descriptions when sharing.",
+  "keywords": [
+    "crawler",
+    "Facebook",
+    "graph",
+    "og",
+    "open graph",
+    "open",
+    "opengraph"
+  ],
   "main": "index.js",
   "bin": {
     "og_crawl": "bin/crawl.js"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "Rob Frampton <rob.g.frampton@gmail.com> (https://github.com/Robert-Frampton)",
-  "license": "ISC",
+  "repository": "https://github.com/Robert-Frampton/og-crawler",
+  "license": "MIT",
   "dependencies": {
     "async": "^1.4.2",
     "chalk": "^1.1.1",
+    "inquirer": "^0.11.0",
     "js-crawler": "^0.3.7",
     "lodash": "^3.10.1",
     "minimist": "^1.2.0"

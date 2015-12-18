@@ -4,13 +4,14 @@ var _ = require('lodash');
 var async = require('async');
 var chalk = require('chalk');
 var Crawler = require('js-crawler');
+var EventEmitter = require('events').EventEmitter;
 var fs = require('fs');
 var http = require('http');
 var path = require('path');
 
 var ERRORS = {
-	ERROR_INVALID_URL: new Error('Please enter a valid url'),
-	ERROR_UNSPECIFIED_URL: new Error('A url must be specified')
+	ERROR_INVALID_URL: new Error('Please enter a valid URL'),
+	ERROR_UNSPECIFIED_URL: new Error('A URL must be specified')
 };
 
 var OgCrawler = function(config) {
@@ -20,15 +21,18 @@ var OgCrawler = function(config) {
 		throw ERRORS.ERROR_UNSPECIFIED_URL;
 	}
 
-	this.depth = config.depth;
+	this.silent = !_.isUndefined(config.silent) ? config.silent : false;
+	this.depth = config.depth || 3;
 	this.finishedScrapes = 0;
 	this.length = 0;
-	this.maxParallel = config.maxParallel;
+	this.maxParallel = config.maxParallel || 5;
 	this.ogRequests = [];
 	this.urls = [];
+
+	EventEmitter.call(this);
 };
 
-OgCrawler.prototype = {
+OgCrawler.prototype = _.create(EventEmitter.prototype, {
 	crawl: function() {
 		var instance = this;
 
@@ -44,27 +48,15 @@ OgCrawler.prototype = {
 		});
 
 		instance._crawler = crawler;
+
+		return instance;
 	},
 
 	_clearStdout: function() {
-		process.stdout.cursorTo(0);
-		process.stdout.clearLine();
-	},
-
-	_createLogFile: function(urls) {
-		var logHeader = 'Urls visited: ' + urls.length + '\n';
-
-		var logContents = logHeader + urls.join('\n');
-
-		var fileName = 'url_log_' + new Date().getTime() + '.txt';
-
-		fileName = path.join(process.cwd(), fileName);
-
-		fs.writeFileSync(fileName, logContents, {
-			encoding: 'utf8'
-		});
-
-		process.stdout.write(chalk.bold('\nLog file created: ') + chalk.cyan(fileName));
+		if (!this.silent) {
+			process.stdout.cursorTo(0);
+			process.stdout.clearLine();
+		}
 	},
 
 	_createOGReqest: function(url) {
@@ -73,6 +65,12 @@ OgCrawler.prototype = {
 		return function(cb) {
 			instance._makeOGScrapeRequest(url, cb);
 		};
+	},
+
+	_log: function(message) {
+		if (!this.silent) {
+			process.stdout.write(message);
+		}
 	},
 
 	_makeOGScrapeRequest: function(url, cb) {
@@ -89,6 +87,10 @@ OgCrawler.prototype = {
 
 			instance._updateSrapeLabel(url);
 
+			instance.emit('scrape', {
+				url: url
+			});
+
 			cb(null, url);
 		});
 
@@ -101,6 +103,11 @@ OgCrawler.prototype = {
 		var urls = this.urls;
 
 		if (_.startsWith(url, this.url) && !_.contains(urls, url)) {
+			this.emit('crawl', {
+				url: url,
+				urls: urls
+			});
+
 			this._updateLoadingLabel();
 
 			this.ogRequests.push(this._createOGReqest(url));
@@ -121,7 +128,11 @@ OgCrawler.prototype = {
 		this.urls = urls;
 
 		async.parallelLimit(this.ogRequests, instance.maxParallel, function(err, results) {
-			instance._createLogFile(urls);
+			instance._log(chalk.bold('\nFinished!\n'));
+
+			instance.emit('end', {
+				urls: urls
+			});
 		});
 	},
 
@@ -132,7 +143,7 @@ OgCrawler.prototype = {
 			this._clearStdout();
 		}
 
-		process.stdout.write(chalk.bold('Unique urls collected: ') + chalk.cyan(this.length));
+		this._log(chalk.bold('Unique URLs collected: ') + chalk.cyan(this.length));
 	},
 
 	_updateSrapeLabel: function(url) {
@@ -140,7 +151,7 @@ OgCrawler.prototype = {
 		var length = this.urls.length;
 
 		if (index == 1) {
-			process.stdout.write('\n');
+			this._log('\n');
 		}
 		else {
 			this._clearStdout();
@@ -148,8 +159,8 @@ OgCrawler.prototype = {
 
 		var percent = (index / length * 100).toFixed(2) + '%';
 
-		process.stdout.write(chalk.bold('Urls scraped: ') + chalk.cyan(percent));
+		this._log(chalk.bold('URLs scraped: ') + chalk.cyan(percent));
 	}
-};
+});
 
 module.exports = OgCrawler;
