@@ -41,7 +41,7 @@ Default value: 3
 
 `-s, --silent` Setting this to true will prevent any logging. It will always prevent og-crawler from asking if you'd like to create a log file at the end of the process.
 
-Default value: 3
+Default value: false
 
 `-m, --max-parallel` If your website is large, and it's taking a long time to scrape the og data, increase this number to make more parallel requests.
 
