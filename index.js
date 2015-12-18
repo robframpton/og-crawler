@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 var _ = require('lodash');
-var argv = require('minimist')(process.argv.slice(2));
 var async = require('async');
 var chalk = require('chalk');
 var Crawler = require('js-crawler');
@@ -10,20 +9,21 @@ var http = require('http');
 var path = require('path');
 
 var ERRORS = {
-	ERROR_INVALID_URL: new Error('Please enter a valid url!'),
-	ERROR_UNSPECIFIED_URL: new Error('url must be specified!')
+	ERROR_INVALID_URL: new Error('Please enter a valid url'),
+	ERROR_UNSPECIFIED_URL: new Error('A url must be specified')
 };
 
-var OgCrawler = function() {
-	this.url = argv.u || argv.url;
+var OgCrawler = function(config) {
+	this.url = config.url;
 
 	if (!this.url) {
 		throw ERRORS.ERROR_UNSPECIFIED_URL;
 	}
 
-	this.depth = argv.d || argv.depth || 3;
-	this.finishedScapes = 0;
+	this.depth = config.depth;
+	this.finishedScrapes = 0;
 	this.length = 0;
+	this.maxParallel = config.maxParallel;
 	this.ogRequests = [];
 	this.urls = [];
 };
@@ -85,7 +85,7 @@ OgCrawler.prototype = {
 		};
 
 		var req = http.request(options, function(res) {
-			instance.finishedScapes++;
+			instance.finishedScrapes++;
 
 			instance._updateSrapeLabel(url);
 
@@ -120,7 +120,7 @@ OgCrawler.prototype = {
 
 		this.urls = urls;
 
-		async.parallelLimit(this.ogRequests, 10, function(err, results) {
+		async.parallelLimit(this.ogRequests, instance.maxParallel, function(err, results) {
 			instance._createLogFile(urls);
 		});
 	},
@@ -136,7 +136,7 @@ OgCrawler.prototype = {
 	},
 
 	_updateSrapeLabel: function(url) {
-		var index = this.finishedScapes;
+		var index = this.finishedScrapes;
 		var length = this.urls.length;
 
 		if (index == 1) {
@@ -152,4 +152,4 @@ OgCrawler.prototype = {
 	}
 };
 
-new OgCrawler().crawl();
+module.exports = OgCrawler;

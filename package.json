@@ -4,7 +4,7 @@
   "description": "Crawls/scrapes a website for og data, so Facebook will show current images and descriptions when sharing.",
   "main": "index.js",
   "bin": {
-    "og_crawl": "./index.js"
+    "og_crawl": "bin/crawl.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
